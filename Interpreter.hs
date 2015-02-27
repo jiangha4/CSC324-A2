@@ -87,4 +87,6 @@ evaluate (If cond x y) =
     case cond of
         Boolean True -> x
         Boolean False -> y
-evaluate (Add x y) = 
+
+evaluate (Add (Number x) (Number y)) = Number (x + y)
+evaluate (Add x y) = (evaluate (Add (evaluate x) (evaluate y)))
