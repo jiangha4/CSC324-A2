@@ -55,7 +55,8 @@ data Expr = Number Integer |
             If Expr Expr Expr |
             Add Expr Expr |
             Multiply Expr Expr |
-            Eq Expr Expr
+            Eq Expr Expr |
+            Lt Expr Expr
 
 instance Show Expr where
     show (Number x) = show x
@@ -72,6 +73,8 @@ instance Show Expr where
         "(* " ++ show e1 ++ show e2 ++ ")"
     show (Eq e1 e2) =
         "(equal? " ++ show e1 ++ show e2 ++ ")"
+    show (Lt e1 e2) =
+        "(< " ++ show e1 ++ show e2 ++ ")"
 
 
 -- |Take a base tree produced by the starter code,
@@ -87,6 +90,8 @@ parseExpr (Compound [Atom "*", x, y]) =
     Multiply (parseExpr x) (parseExpr y)
 parseExpr (Compound [Atom "equal?", x, y]) =
     Eq (parseExpr x) (parseExpr y)
+parseExpr (Compound [Atom "<", x, y]) =
+    Lt (parseExpr x) (parseExpr y)
 
 -- |Evaluate an AST by simplifying it into
 --  a number, boolean, list, or function value.
@@ -112,8 +117,14 @@ evaluate (Multiply x y) =
 
 -- |Evaluate equality.
 evaluate (Eq (Number x) (Number y)) =
-   Boolean (x == y)
+    Boolean (x == y)
 evaluate (Eq (Boolean x) (Boolean y)) =
-   Boolean (x == y)
+    Boolean (x == y)
 evaluate (Eq x y) =
-   (evaluate (Eq (evaluate x) (evaluate y)))
+    (evaluate (Eq (evaluate x) (evaluate y)))
+
+-- |Evaluate less-than comparison.
+evaluate (Lt (Number x) (Number y)) =
+    Boolean (x < y)
+evaluate (Lt x y) =
+    (evaluate (Lt (evaluate x) (evaluate y)))
