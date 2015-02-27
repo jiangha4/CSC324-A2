@@ -52,7 +52,8 @@ interpretPaddle (Just exprs) =
 data Expr = Number Integer |
             Boolean Bool |
             If Expr Expr Expr |
-            Add Expr Expr
+            Add Expr Expr |
+            Subtract Expr Expr
 
 instance Show Expr where
     show (Number x) = show x
@@ -65,6 +66,8 @@ instance Show Expr where
         "(if " ++ show e1 ++ " " ++ show e2 ++ " " ++ show e3 ++ ")"
     show (Add e1 e2) =
         "(+ " ++ show e1 ++ show e2 ++ ")"
+    show (Subtract e1 e2) =
+        "(- " ++ show e1 ++ show e2 ++ ")"
 
 
 -- |Take a base tree produced by the starter code,
@@ -76,7 +79,8 @@ parseExpr (Compound [Atom "if", b, x, y]) =
     If (parseExpr b) (parseExpr x) (parseExpr y)
 parseExpr (Compound [Atom "+", x, y]) =
     Add (parseExpr x) (parseExpr y)
-
+parseExpr (Compound [Atom "-", x, y]) =
+    Subtract (parseExpr x) (parseExpr y)
 
 -- |Evaluate an AST by simplifying it into
 --  a number, boolean, list, or function value.
@@ -88,5 +92,12 @@ evaluate (If cond x y) =
         Boolean True -> x
         Boolean False -> y
 
-evaluate (Add (Number x) (Number y)) = Number (x + y)
-evaluate (Add x y) = (evaluate (Add (evaluate x) (evaluate y)))
+evaluate (Add (Number x) (Number y)) =
+    Number (x + y)
+evaluate (Add x y) =
+    (evaluate (Add (evaluate x) (evaluate y)))
+
+evaluate (Subtract (Number x) (Number y)) =
+    Number (x - y)
+evaluate (Subtract x y) =
+    (evaluate (Subtract (evaluate x) (evaluate y)))
