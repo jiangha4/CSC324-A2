@@ -70,6 +70,8 @@ instance Show Expr where
         "(+ " ++ show e1 ++ show e2 ++ ")"
     show (Multiply e1 e2) =
         "(* " ++ show e1 ++ show e2 ++ ")"
+    show (Eq e1 e2) =
+        "(equal? " ++ show e1 ++ show e2 ++ ")"
 
 
 -- |Take a base tree produced by the starter code,
@@ -83,6 +85,8 @@ parseExpr (Compound [Atom "+", x, y]) =
     Add (parseExpr x) (parseExpr y)
 parseExpr (Compound [Atom "*", x, y]) =
     Multiply (parseExpr x) (parseExpr y)
+parseExpr (Compound [Atom "equal?", x, y]) =
+    Eq (parseExpr x) (parseExpr y)
 
 -- |Evaluate an AST by simplifying it into
 --  a number, boolean, list, or function value.
@@ -94,12 +98,22 @@ evaluate (If cond x y) =
         Boolean True -> x
         Boolean False -> y
 
+-- |Evaluate addition.
 evaluate (Add (Number x) (Number y)) =
     Number (x + y)
 evaluate (Add x y) =
     (evaluate (Add (evaluate x) (evaluate y)))
 
+-- |Evaluate multiplication.
 evaluate (Multiply (Number x) (Number y)) =
     Number (x * y)
 evaluate (Multiply x y) =
     (evaluate (Multiply (evaluate x) (evaluate y)))
+
+-- |Evaluate equality.
+evaluate (Eq (Number x) (Number y)) =
+   Boolean (x == y)
+evaluate (Eq (Boolean x) (Boolean y)) =
+   Boolean (x == y)
+evaluate (Eq x y) =
+   (evaluate (Eq (evaluate x) (evaluate y)))
