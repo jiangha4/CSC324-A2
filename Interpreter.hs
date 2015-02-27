@@ -9,6 +9,7 @@ program to handle the full range of Paddle.
 
 In the space below, please list your group member(s):
 g3kooks :: Philip Kukulak
+g3jiangh :: Haohan Jiang
 -}
 
 module Interpreter (main) where
@@ -53,7 +54,8 @@ data Expr = Number Integer |
             Boolean Bool |
             If Expr Expr Expr |
             Add Expr Expr |
-            Subtract Expr Expr
+            Multiply Expr Expr |
+            Eq Expr Expr
 
 instance Show Expr where
     show (Number x) = show x
@@ -66,8 +68,8 @@ instance Show Expr where
         "(if " ++ show e1 ++ " " ++ show e2 ++ " " ++ show e3 ++ ")"
     show (Add e1 e2) =
         "(+ " ++ show e1 ++ show e2 ++ ")"
-    show (Subtract e1 e2) =
-        "(- " ++ show e1 ++ show e2 ++ ")"
+    show (Multiply e1 e2) =
+        "(* " ++ show e1 ++ show e2 ++ ")"
 
 
 -- |Take a base tree produced by the starter code,
@@ -79,8 +81,8 @@ parseExpr (Compound [Atom "if", b, x, y]) =
     If (parseExpr b) (parseExpr x) (parseExpr y)
 parseExpr (Compound [Atom "+", x, y]) =
     Add (parseExpr x) (parseExpr y)
-parseExpr (Compound [Atom "-", x, y]) =
-    Subtract (parseExpr x) (parseExpr y)
+parseExpr (Compound [Atom "*", x, y]) =
+    Multiply (parseExpr x) (parseExpr y)
 
 -- |Evaluate an AST by simplifying it into
 --  a number, boolean, list, or function value.
@@ -97,7 +99,7 @@ evaluate (Add (Number x) (Number y)) =
 evaluate (Add x y) =
     (evaluate (Add (evaluate x) (evaluate y)))
 
-evaluate (Subtract (Number x) (Number y)) =
-    Number (x - y)
-evaluate (Subtract x y) =
-    (evaluate (Subtract (evaluate x) (evaluate y)))
+evaluate (Multiply (Number x) (Number y)) =
+    Number (x * y)
+evaluate (Multiply x y) =
+    (evaluate (Multiply (evaluate x) (evaluate y)))
