@@ -13,3 +13,5 @@
 (not (< 4 3))
 (not #t)
 (not (not (not #t)))
+(and #t (< 0 1))
+(and #f (< 1 (+ 1 0)))
