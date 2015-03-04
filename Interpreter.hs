@@ -58,7 +58,8 @@ data Expr = Number Integer |
             Eq Expr Expr |
             Lt Expr Expr |
             Not Expr |
-            And Expr Expr
+            And Expr Expr |
+            Or Expr Expr
 
 instance Show Expr where
     show (Number x) = show x
@@ -81,6 +82,8 @@ instance Show Expr where
         "(not " ++ show e ++ ")"
     show (And e1 e2) =
         "(and " ++ show e1 ++ show e2 ++ ")"
+    show (Or e1 e2) =
+        "(or " ++ show e1 ++ show e2 ++ ")"
 
 
 -- |Take a base tree produced by the starter code,
@@ -102,12 +105,15 @@ parseExpr (Compound [Atom "not", x]) =
     Not (parseExpr x)
 parseExpr (Compound [Atom "and", x, y]) =
     And (parseExpr x) (parseExpr y)
+parseExpr (Compound [Atom "or", x, y]) =
+    Or (parseExpr x) (parseExpr y)
 
 -- |Evaluate an AST by simplifying it into
 --  a number, boolean, list, or function value.
 evaluate :: Expr -> Expr
 evaluate (Number n) = Number n
 evaluate (Boolean b) = Boolean b
+
 evaluate (If cond x y) =
     case cond of
         Boolean True -> x
@@ -150,3 +156,9 @@ evaluate (And (Boolean x) (Boolean y)) =
     Boolean (x && y)
 evaluate (And x y) =
     (evaluate (And (evaluate x) (evaluate y)))
+
+-- |Evaluate logical or.
+evaluate (Or (Boolean x) (Boolean y)) =
+    Boolean (x || y)
+evaluate (Or x y) =
+    (evaluate (Or (evaluate x) (evaluate y)))
