@@ -48,7 +48,6 @@ interpretPaddle (Just exprs) =
         -- String representations of each value, joined with newlines
         unlines (map show vals)
 
-
 -- An expression data type
 data Expr = Number Integer |
             Boolean Bool |
@@ -59,7 +58,8 @@ data Expr = Number Integer |
             Lt Expr Expr |
             Not Expr |
             And Expr Expr |
-            Or Expr Expr
+            Or Expr Expr |
+            List [Expr]
 
 instance Show Expr where
     show (Number x) = show x
@@ -85,26 +85,33 @@ instance Show Expr where
     show (Or e1 e2) =
         "(or " ++ show e1 ++ show e2 ++ ")"
 
-
 -- |Take a base tree produced by the starter code,
 --  and transform it into a proper AST.
 parseExpr :: BaseExpr -> Expr
 parseExpr (LiteralInt n) = Number n
 parseExpr (LiteralBool b) = Boolean b
+
 parseExpr (Compound [Atom "if", b, x, y]) =
     If (parseExpr b) (parseExpr x) (parseExpr y)
+
 parseExpr (Compound [Atom "+", x, y]) =
     Add (parseExpr x) (parseExpr y)
+
 parseExpr (Compound [Atom "*", x, y]) =
     Multiply (parseExpr x) (parseExpr y)
+
 parseExpr (Compound [Atom "equal?", x, y]) =
     Eq (parseExpr x) (parseExpr y)
+
 parseExpr (Compound [Atom "<", x, y]) =
     Lt (parseExpr x) (parseExpr y)
+
 parseExpr (Compound [Atom "not", x]) =
     Not (parseExpr x)
+
 parseExpr (Compound [Atom "and", x, y]) =
     And (parseExpr x) (parseExpr y)
+
 parseExpr (Compound [Atom "or", x, y]) =
     Or (parseExpr x) (parseExpr y)
 
@@ -114,10 +121,11 @@ evaluate :: Expr -> Expr
 evaluate (Number n) = Number n
 evaluate (Boolean b) = Boolean b
 
+-- |Evaluate if-then-else.
 evaluate (If cond x y) =
-    case cond of
-        Boolean True -> x
-        Boolean False -> y
+    case (evaluate cond) of
+        Boolean True -> (evaluate x)
+        Boolean False -> (evaluate y)
 
 -- |Evaluate addition.
 evaluate (Add (Number x) (Number y)) =
