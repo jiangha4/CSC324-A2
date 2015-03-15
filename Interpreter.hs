@@ -12,6 +12,17 @@ g3kooks :: Philip Kukulak
 g3jiangh :: Haohan Jiang
 -}
 
+{- TODO : 
+    - Equals not working for lists
+    - Show for lists is fucked
+    - No errors for List functions
+    - Cond
+    - Identifiers
+    - Bindings and closures
+    - Part 2
+-}
+
+
 module Interpreter (main) where
 
 import BaseParser (BaseExpr(LiteralInt, LiteralBool, Atom, Compound), parseFile)
@@ -71,7 +82,10 @@ data Expr = Number Integer |
             Or Expr Expr |
             Cond [(Expr, Expr)] Expr | -- List of Exprs 
             Else Expr |
-            List [Expr]  
+            List [Expr] |
+            Empty Expr |
+            First Expr |
+            Rest [Expr]
 
 instance Show Expr where
     show (Number x) = show x
@@ -96,16 +110,27 @@ instance Show Expr where
         "(and " ++ show e1 ++ show e2 ++ ")"
     show (Or e1 e2) =
         "(or " ++ show e1 ++ show e2 ++ ")"
-    show (List expressions) =
-        "(" ++ show expressions ++ ")"
+    show (List expression) =
+        "'" ++ "(" ++ show expression ++ ")"
+    show (First expression) = 
+        show expression
+    show (Rest expressions) =
+        "'" ++ "(" ++ show expressions ++ ")"
+    show (Empty expressions) = 
+        show expressions        
+
+-- Doesn't work. Don't know why.
+--    show (List (expression : expressions)) =
+--       "'" ++ "(" ++ show expression ++ (map show expressions) ++ ")"
 
 -- |Take a base tree produced by the starter code,
 --  and transform it into a proper AST.
 parseExpr :: BaseExpr -> Expr
+
 parseExpr (LiteralInt n) = Number n
+
 parseExpr (LiteralBool b) = Boolean b
 
--- Input: Compound [Atom "if",LiteralBool True,LiteralInt 10,LiteralInt 20]
 parseExpr (Compound [Atom "if", b, x, y]) =
     If (parseExpr b) (parseExpr x) (parseExpr y)
 
@@ -115,6 +140,7 @@ parseExpr (Compound [Atom "+", x, y]) =
 parseExpr (Compound [Atom "*", x, y]) =
     Multiply (parseExpr x) (parseExpr y)
 
+-- Not working for lists
 parseExpr (Compound [Atom "equal?", x, y]) =
     Eq (parseExpr x) (parseExpr y)
 
@@ -123,17 +149,27 @@ parseExpr (Compound [Atom "<", x, y]) =
 
 parseExpr (Compound [Atom "not", x]) =
     Not (parseExpr x)
--- Input: Compound [Atom "and",LiteralBool True,
--- Compound [Atom "<",LiteralInt 0,LiteralInt 1]]
+
 parseExpr (Compound [Atom "and", x, y]) =
     And (parseExpr x) (parseExpr y)
 
 parseExpr (Compound [Atom "or", x, y]) =
     Or (parseExpr x) (parseExpr y)
 
--- Input: [Compound [Atom "list",LiteralInt 1,LiteralInt 2,LiteralInt 3]]
 parseExpr (Compound (Atom "list" : lstValue)) = 
     List (map (\x -> (parseExpr x)) lstValue)
+
+-- List function: first
+parseExpr (Compound [Atom "first", Compound (Atom "list": first : rest)]) =
+    First (parseExpr first)
+
+-- List function: rest
+parseExpr (Compound [Atom "rest", Compound (Atom "list" : first : rest)]) =
+    Rest (map (\x -> (parseExpr x)) rest)
+
+-- List function: empty
+parseExpr (Compound [Atom "empty?", Compound (Atom "list" : expressions)]) =
+    Empty (if ((length expressions) == 0) then Boolean True else Boolean False)
 
 -- Input: Compound [Atom "cond",
 --        Compound [LiteralBool True,Compound [Atom "+",LiteralInt 5,LiteralInt 1]],
