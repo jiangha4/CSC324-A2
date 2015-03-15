@@ -48,6 +48,7 @@ interpretPaddle (Just exprs) =
         -- String representations of each value, joined with newlines
         unlines (map show vals)
 
+<<<<<<< HEAD
 -- BaseParse -> parseExpr to construct AST -> evaulate
 -- An expression data type: This can be 
    -- 1. Literal or identifier
@@ -56,6 +57,10 @@ interpretPaddle (Just exprs) =
 -- This defines a new data type 'Expr' and The RHS are the constructors for
 -- an 'Expr'
 data Expr = Number Integer | 
+=======
+-- An expression data type
+data Expr = Number Integer |
+>>>>>>> master
             Boolean Bool |
             Identifier Expr |
             -- Only two literal types in Integers and Booleans
@@ -68,8 +73,11 @@ data Expr = Number Integer |
             Not Expr |
             And Expr Expr |
             Or Expr Expr |
+<<<<<<< HEAD
             Cond [(Expr, Expr)] Expr | -- List of Exprs 
             Else Expr |
+=======
+>>>>>>> master
             List [Expr]
 
 instance Show Expr where
@@ -102,26 +110,42 @@ parseExpr :: BaseExpr -> Expr
 parseExpr (LiteralInt n) = Number n
 parseExpr (LiteralBool b) = Boolean b
 
+<<<<<<< HEAD
 -- Input: Compound [Atom "if",LiteralBool True,LiteralInt 10,LiteralInt 20]
 parseExpr (Compound [Atom "if", b, x, y]) =
     If (parseExpr b) (parseExpr x) (parseExpr y)
 
 -- Input: Compound [Atom "+",LiteralInt 3,LiteralInt 4]
+=======
+parseExpr (Compound [Atom "if", b, x, y]) =
+    If (parseExpr b) (parseExpr x) (parseExpr y)
+
+>>>>>>> master
 parseExpr (Compound [Atom "+", x, y]) =
     Add (parseExpr x) (parseExpr y)
+
 parseExpr (Compound [Atom "*", x, y]) =
     Multiply (parseExpr x) (parseExpr y)
+
 parseExpr (Compound [Atom "equal?", x, y]) =
     Eq (parseExpr x) (parseExpr y)
+
 parseExpr (Compound [Atom "<", x, y]) =
     Lt (parseExpr x) (parseExpr y)
+
 parseExpr (Compound [Atom "not", x]) =
+<<<<<<< HEAD
     Not (parseExpr x) 
 
 -- Input: Compound [Atom "and",LiteralBool True,
 -- Compound [Atom "<",LiteralInt 0,LiteralInt 1]]
+=======
+    Not (parseExpr x)
+
+>>>>>>> master
 parseExpr (Compound [Atom "and", x, y]) =
     And (parseExpr x) (parseExpr y)
+
 parseExpr (Compound [Atom "or", x, y]) =
     Or (parseExpr x) (parseExpr y)
 
@@ -140,11 +164,15 @@ evaluate :: Expr -> Expr
 evaluate (Number n) = Number n
 evaluate (Boolean b) = Boolean b
 
+<<<<<<< HEAD
 -- |Evaluate If
+=======
+-- |Evaluate if-then-else.
+>>>>>>> master
 evaluate (If cond x y) =
-    case cond of
-        Boolean True -> x
-        Boolean False -> y
+    case (evaluate cond) of
+        Boolean True -> (evaluate x)
+        Boolean False -> (evaluate y)
 
 -- |Evaluate addition.
 evaluate (Add (Number x) (Number y)) =
