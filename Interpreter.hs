@@ -17,8 +17,10 @@ g3jiangh :: Haohan Jiang
     - Show for lists is fucked
     - No errors for List functions
     - Cond
-    - Identifiers
+    - Empty returning List instead of True or False
+    - Defining functions
     - Bindings and closures
+    - Definitations
     - Part 2
 -}
 
@@ -69,7 +71,7 @@ interpretPaddle (Just exprs) =
 -- An expression data type
 data Expr = Number Integer |
             Boolean Bool |
-            Identifier Expr |
+            Identifier [Char]|
             -- Only two literal types in Integers and Booleans
             -- Parsed by BaseParser.hs
             If Expr Expr Expr |
@@ -85,43 +87,41 @@ data Expr = Number Integer |
             List [Expr] |
             Empty Expr |
             First Expr |
-            Rest [Expr]
+            Rest [Expr] |
+            Define (Expr, Expr) |
+            SymbolTable [(Expr, Expr)]
+
+symbolTable = SymbolTable [] -- Global symbol table
+
+-- Pushes a new identifier and its value into the symbolTable
+pushIdentifier :: Expr -> Expr -> [(Expr, Expr)] -> [(Expr, Expr)]
+pushIdentifier newId value symbolList = (newId, value) : symbolList
 
 instance Show Expr where
     show (Number x) = show x
     show (Boolean True) = "#t"
     show (Boolean False) = "#f"
+    show (Identifier id) = show id
     -- Note: the following definition is not necessary for this assignment,
     -- but you may find it helpful to define string representations of all
     -- expression forms.
-    show (If e1 e2 e3) =
-        "(if " ++ show e1 ++ " " ++ show e2 ++ " " ++ show e3 ++ ")"
-    show (Add e1 e2) =
-        "(+ " ++ show e1 ++ show e2 ++ ")"
-    show (Multiply e1 e2) =
-        "(* " ++ show e1 ++ show e2 ++ ")"
-    show (Eq e1 e2) =
-        "(equal? " ++ show e1 ++ show e2 ++ ")"
-    show (Lt e1 e2) =
-        "(< " ++ show e1 ++ show e2 ++ ")"
-    show (Not e) =
-        "(not " ++ show e ++ ")"
-    show (And e1 e2) =
-        "(and " ++ show e1 ++ show e2 ++ ")"
-    show (Or e1 e2) =
-        "(or " ++ show e1 ++ show e2 ++ ")"
-    show (List expression) =
-        "'" ++ "(" ++ show expression ++ ")"
-    show (First expression) = 
-        show expression
-    show (Rest expressions) =
-        "'" ++ "(" ++ show expressions ++ ")"
-    show (Empty expressions) = 
-        show expressions        
-
+    show (If e1 e2 e3) = "(if " ++ show e1 ++ " " ++ show e2 ++ " " ++ show e3 ++ ")"
+    show (Add e1 e2) = "(+ " ++ show e1 ++ show e2 ++ ")"
+    show (Multiply e1 e2) = "(* " ++ show e1 ++ show e2 ++ ")"
+    show (Eq e1 e2) = "(equal? " ++ show e1 ++ show e2 ++ ")"
+    show (Lt e1 e2) = "(< " ++ show e1 ++ show e2 ++ ")"
+    show (Not e) = "(not " ++ show e ++ ")"
+    show (And e1 e2) = "(and " ++ show e1 ++ show e2 ++ ")"
+    show (Or e1 e2) = "(or " ++ show e1 ++ show e2 ++ ")"
+    show (List expression) = "'" ++ "(" ++ show expression ++ ")"
+    show (First expression) = show expression
+    show (Rest expressions) = "'" ++ "(" ++ show expressions ++ ")"
+    show (Empty expressions) = show expressions
+    show (Define (identifier, value)) = show identifier ++ "=" ++ show value  
+    show (SymbolTable [(identifier, value)]) = show identifier ++ show value
 -- Doesn't work. Don't know why.
---    show (List (expression : expressions)) =
---       "'" ++ "(" ++ show expression ++ (map show expressions) ++ ")"
+--  show (List (expression : expressions)) = 
+--    "'" ++ "(" ++ show expression ++ (map show expressions) ++ ")"
 
 -- |Take a base tree produced by the starter code,
 --  and transform it into a proper AST.
@@ -167,9 +167,17 @@ parseExpr (Compound [Atom "first", Compound (Atom "list": first : rest)]) =
 parseExpr (Compound [Atom "rest", Compound (Atom "list" : first : rest)]) =
     Rest (map (\x -> (parseExpr x)) rest)
 
+-- Compound [Atom "empty?",Compound [Atom "list",LiteralInt 1,LiteralInt 2,LiteralInt 3]]
 -- List function: empty
+-- Currently, only returning a List, not boolean values in evaluate
 parseExpr (Compound [Atom "empty?", Compound (Atom "list" : expressions)]) =
-    Empty (if ((length expressions) == 0) then Boolean True else Boolean False)
+    Empty (List (map (\x -> (parseExpr x)) expressions))
+
+parseExpr (Atom id) = Identifier id
+
+-- Just [Compound [Atom "define",Atom "a",LiteralInt 10]]
+parseExpr (Compound [Atom "define", identifier, expression]) =
+    Define ((parseExpr identifier), (parseExpr expression))
 
 -- Input: Compound [Atom "cond",
 --        Compound [LiteralBool True,Compound [Atom "+",LiteralInt 5,LiteralInt 1]],
@@ -178,13 +186,18 @@ parseExpr (Compound [Atom "empty?", Compound (Atom "list" : expressions)]) =
     -- Compound [LiteralBool True,Compound [Atom "+",LiteralInt 2,LiteralInt 1]],
     -- Compound [LiteralBool False,Compound [Atom "+",LiteralInt 3,LiteralInt 1]],
     -- Atom "else",Compound [Compound [Atom "+",LiteralInt 3,LiteralInt 1]]]
--- parseExpr (Compound [Atom "cond", expression]) =
+-- parseExpr (Compound (Atom "cond" : ), Atom "else", finalExpr) =
+--    Cond (map (\x -> (parseExpr x)) expressions) Else (parseExpr finalExpr)
 
 -- |Evaluate an AST by simplifying it into
 --  a number, boolean, list, or function value.
 evaluate :: Expr -> Expr
 evaluate (Number n) = Number n
 evaluate (Boolean b) = Boolean b
+
+-- | Evaluate Empty
+evaluate (Empty (List expressions)) = 
+    Empty (if ((length expressions) == 0) then Boolean True else Boolean False)
 
 -- |Evaluate list creation
 evaluate (List expressions) = 
