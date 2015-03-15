@@ -71,7 +71,7 @@ data Expr = Number Integer |
             Or Expr Expr |
             Cond [(Expr, Expr)] Expr | -- List of Exprs 
             Else Expr |
-            List [Expr]
+            List [Expr]  
 
 instance Show Expr where
     show (Number x) = show x
@@ -96,6 +96,8 @@ instance Show Expr where
         "(and " ++ show e1 ++ show e2 ++ ")"
     show (Or e1 e2) =
         "(or " ++ show e1 ++ show e2 ++ ")"
+    show (List expressions) =
+        "(" ++ show expressions ++ ")"
 
 -- |Take a base tree produced by the starter code,
 --  and transform it into a proper AST.
@@ -120,7 +122,7 @@ parseExpr (Compound [Atom "<", x, y]) =
     Lt (parseExpr x) (parseExpr y)
 
 parseExpr (Compound [Atom "not", x]) =
-
+    Not (parseExpr x)
 -- Input: Compound [Atom "and",LiteralBool True,
 -- Compound [Atom "<",LiteralInt 0,LiteralInt 1]]
 parseExpr (Compound [Atom "and", x, y]) =
@@ -129,20 +131,28 @@ parseExpr (Compound [Atom "and", x, y]) =
 parseExpr (Compound [Atom "or", x, y]) =
     Or (parseExpr x) (parseExpr y)
 
+-- Input: [Compound [Atom "list",LiteralInt 1,LiteralInt 2,LiteralInt 3]]
+parseExpr (Compound (Atom "list" : lstValue)) = 
+    List (map (\x -> (parseExpr x)) lstValue)
+
 -- Input: Compound [Atom "cond",
 --        Compound [LiteralBool True,Compound [Atom "+",LiteralInt 5,LiteralInt 1]],
 --        Atom "else",Compound [Compound [Atom "+",LiteralInt 6,LiteralInt 1]]]
-
 -- Input: Compound [Atom "cond",
     -- Compound [LiteralBool True,Compound [Atom "+",LiteralInt 2,LiteralInt 1]],
     -- Compound [LiteralBool False,Compound [Atom "+",LiteralInt 3,LiteralInt 1]],
     -- Atom "else",Compound [Compound [Atom "+",LiteralInt 3,LiteralInt 1]]]
+-- parseExpr (Compound [Atom "cond", expression]) =
 
 -- |Evaluate an AST by simplifying it into
 --  a number, boolean, list, or function value.
 evaluate :: Expr -> Expr
 evaluate (Number n) = Number n
 evaluate (Boolean b) = Boolean b
+
+-- |Evaluate list creation
+evaluate (List expressions) = 
+    List (map (\x -> evaluate x) expressions)
 
 -- |Evaluate if-then-else.
 evaluate (If cond x y) =
