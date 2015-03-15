@@ -48,10 +48,18 @@ interpretPaddle (Just exprs) =
         -- String representations of each value, joined with newlines
         unlines (map show vals)
 
-
--- An expression data type
-data Expr = Number Integer |
+-- BaseParse -> parseExpr to construct AST -> evaulate
+-- An expression data type: This can be 
+   -- 1. Literal or identifier
+   -- 2. Function application or syntax
+   -- 3. Function creation expression
+-- This defines a new data type 'Expr' and The RHS are the constructors for
+-- an 'Expr'
+data Expr = Number Integer | 
             Boolean Bool |
+            Identifier Expr |
+            -- Only two literal types in Integers and Booleans
+            -- Parsed by BaseParser.hs
             If Expr Expr Expr |
             Add Expr Expr |
             Multiply Expr Expr |
@@ -59,7 +67,10 @@ data Expr = Number Integer |
             Lt Expr Expr |
             Not Expr |
             And Expr Expr |
-            Or Expr Expr
+            Or Expr Expr |
+            Cond [(Expr, Expr)] Expr | -- List of Exprs 
+            Else Expr |
+            List [Expr]
 
 instance Show Expr where
     show (Number x) = show x
@@ -85,14 +96,17 @@ instance Show Expr where
     show (Or e1 e2) =
         "(or " ++ show e1 ++ show e2 ++ ")"
 
-
 -- |Take a base tree produced by the starter code,
 --  and transform it into a proper AST.
 parseExpr :: BaseExpr -> Expr
 parseExpr (LiteralInt n) = Number n
 parseExpr (LiteralBool b) = Boolean b
+
+-- Input: Compound [Atom "if",LiteralBool True,LiteralInt 10,LiteralInt 20]
 parseExpr (Compound [Atom "if", b, x, y]) =
     If (parseExpr b) (parseExpr x) (parseExpr y)
+
+-- Input: Compound [Atom "+",LiteralInt 3,LiteralInt 4]
 parseExpr (Compound [Atom "+", x, y]) =
     Add (parseExpr x) (parseExpr y)
 parseExpr (Compound [Atom "*", x, y]) =
@@ -102,11 +116,23 @@ parseExpr (Compound [Atom "equal?", x, y]) =
 parseExpr (Compound [Atom "<", x, y]) =
     Lt (parseExpr x) (parseExpr y)
 parseExpr (Compound [Atom "not", x]) =
-    Not (parseExpr x)
+    Not (parseExpr x) 
+
+-- Input: Compound [Atom "and",LiteralBool True,
+-- Compound [Atom "<",LiteralInt 0,LiteralInt 1]]
 parseExpr (Compound [Atom "and", x, y]) =
     And (parseExpr x) (parseExpr y)
 parseExpr (Compound [Atom "or", x, y]) =
     Or (parseExpr x) (parseExpr y)
+
+-- Input: Compound [Atom "cond",
+--        Compound [LiteralBool True,Compound [Atom "+",LiteralInt 5,LiteralInt 1]],
+--        Atom "else",Compound [Compound [Atom "+",LiteralInt 6,LiteralInt 1]]]
+
+-- Input: Compound [Atom "cond",
+    -- Compound [LiteralBool True,Compound [Atom "+",LiteralInt 2,LiteralInt 1]],
+    -- Compound [LiteralBool False,Compound [Atom "+",LiteralInt 3,LiteralInt 1]],
+    -- Atom "else",Compound [Compound [Atom "+",LiteralInt 3,LiteralInt 1]]]
 
 -- |Evaluate an AST by simplifying it into
 --  a number, boolean, list, or function value.
@@ -114,6 +140,7 @@ evaluate :: Expr -> Expr
 evaluate (Number n) = Number n
 evaluate (Boolean b) = Boolean b
 
+-- |Evaluate If
 evaluate (If cond x y) =
     case cond of
         Boolean True -> x
