@@ -93,13 +93,16 @@ data Expr = Number Integer |
 
 symbolTable = SymbolTable [] -- Global symbol table
 
--- Pushes a new identifier and its value into the symbolTable
+-- |Pushes a new identifier and its value into the symbolTable
 pushIdentifier :: Expr -> Expr -> [(Expr, Expr)] -> [(Expr, Expr)]
 pushIdentifier newId value symbolList = (newId, value) : symbolList
 
+-- |Removes square brackets and inner-apostrophes
+--  from the string representation of the list.
 fixListShow :: [Char] -> [Char] -> [Char]
 fixListShow = filter . flip notElem
 
+-- |Replaces commas with spaces.
 spaceList :: [Char] -> [Char]
 spaceList [] = []
 spaceList str =
@@ -115,48 +118,59 @@ instance Show Expr where
     show (Boolean True) = "#t"
     show (Boolean False) = "#f"
     show (Identifier id) = show id
-    -- Note: the following definition is not necessary for this assignment,
-    -- but you may find it helpful to define string representations of all
-    -- expression forms.
+    -- |String representation for 'if'.
     show (If e1 e2 e3) = 
         "(if " ++ show e1 ++ " " ++ show e2 ++ " " ++ show e3 ++ ")"
 
+    -- |String representation for "+'.
     show (Add e1 e2) = 
         "(+ " ++ show e1 ++ show e2 ++ ")"
 
+    -- |String representation for '*'.
     show (Multiply e1 e2) = 
         "(* " ++ show e1 ++ show e2 ++ ")"
 
+    -- |String representation for 'equal?'.
     show (Eq e1 e2) = 
         "(equal? " ++ show e1 ++ show e2 ++ ")"
 
+    -- |String representation for '<'.
     show (Lt e1 e2) = 
         "(< " ++ show e1 ++ show e2 ++ ")"
 
+    -- |String representation for 'not'.
     show (Not e) = 
         "(not " ++ show e ++ ")"
 
+    -- |String representation for 'and'.
     show (And e1 e2) = 
         "(and " ++ show e1 ++ show e2 ++ ")"
 
+    -- |String representation for 'or'.
     show (Or e1 e2) = 
         "(or " ++ show e1 ++ show e2 ++ ")"
 
+    -- |String representation for lists.
     show (List e) = 
         "'" ++  fixListShow "[]'" ("(" ++ spaceList (show e) ++ ")")
 
+    -- |String representation for 'first'.
     show (First e) = 
         show e
 
+    -- |String representation for 'rest'.
     show (Rest e) = 
         "'" ++ fixListShow "[]'" ("(" ++ spaceList (show e)  ++ ")")
 
+    -- |String representation for 'empty?'.
     show (Empty e) = 
         show e
 
+    -- |String representation for 'define'.
     show (Define (id, val)) = 
         show id ++ "=" ++ show val
 
+    -- |String representation for symbol tables.
     show (SymbolTable [(id, val)]) = 
         show id ++ show val
 -- Doesn't work. Don't know why.
@@ -167,39 +181,47 @@ parseExpr :: BaseExpr -> Expr
 parseExpr (LiteralInt n) = Number n
 parseExpr (LiteralBool b) = Boolean b
 
+-- |Parse 'if' expressions.
 parseExpr (Compound [Atom "if", b, x, y]) =
     If (parseExpr b) (parseExpr x) (parseExpr y)
 
+-- |Parse addition.
 parseExpr (Compound [Atom "+", x, y]) =
     Add (parseExpr x) (parseExpr y)
 
+-- |Parse multiplication.
 parseExpr (Compound [Atom "*", x, y]) =
     Multiply (parseExpr x) (parseExpr y)
 
--- Not working for lists
+-- |Parse 'equal?'.
 parseExpr (Compound [Atom "equal?", x, y]) =
     Eq (parseExpr x) (parseExpr y)
 
+-- |Parse '<'.
 parseExpr (Compound [Atom "<", x, y]) =
     Lt (parseExpr x) (parseExpr y)
 
+-- |Parse negation.
 parseExpr (Compound [Atom "not", x]) =
     Not (parseExpr x)
 
+-- |Parse 'and'.
 parseExpr (Compound [Atom "and", x, y]) =
     And (parseExpr x) (parseExpr y)
 
+-- |Parse 'or'.
 parseExpr (Compound [Atom "or", x, y]) =
     Or (parseExpr x) (parseExpr y)
 
+-- |Parse list construction.
 parseExpr (Compound (Atom "list" : val)) = 
     List (map (\x -> (parseExpr x)) val)
 
--- List function: first
+-- |Parse 'first' for lists.
 parseExpr (Compound [Atom "first", Compound (Atom "list": first : rest)]) =
     First (parseExpr first)
 
--- List function: rest
+-- |Parse 'rest' for lists.
 parseExpr (Compound [Atom "rest", Compound (Atom "list" : first : rest)]) =
     Rest (map (\x -> (parseExpr x)) rest)
 
@@ -288,6 +310,3 @@ evaluate (List es) =
 -- |Evaluate list empty.
 evaluate (Empty (List lst)) =
     Boolean (null lst)
-
-evaluate (Define (SymbolTable (x, y))) =
-    (evaluate y)
