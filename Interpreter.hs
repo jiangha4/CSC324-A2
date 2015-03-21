@@ -142,26 +142,24 @@ instance Show Expr where
     show (Or e1 e2) = 
         "(or " ++ show e1 ++ show e2 ++ ")"
 
-    show (List expression) = 
-        "'" ++  fixListShow "[]'" ("(" ++ spaceList (show expression) ++ ")")
+    show (List e) = 
+        "'" ++  fixListShow "[]'" ("(" ++ spaceList (show e) ++ ")")
 
-    show (First expression) = 
+    show (First e) = 
         show expression
 
-    show (Rest expressions) = 
-        "'" ++ fixListShow "[]'" ("(" ++ spaceList (show expressions)  ++ ")")
+    show (Rest e) = 
+        "'" ++ fixListShow "[]'" ("(" ++ spaceList (show e)  ++ ")")
 
-    show (Empty expressions) = 
-        show expressions
+    show (Empty e) = 
+        show e
 
-    show (Define (identifier, value)) = 
-        show identifier ++ "=" ++ show value  
+    show (Define (id, val)) = 
+        show id ++ "=" ++ show val
 
-    show (SymbolTable [(identifier, value)]) = 
-        show identifier ++ show value
+    show (SymbolTable [(id, val)]) = 
+        show id ++ show val
 -- Doesn't work. Don't know why.
---  show (List (expression : expressions)) = 
---    "'" ++ "(" ++ show expression ++ (map show expressions) ++ ")"
 
 -- |Take a base tree produced by the starter code,
 --  and transform it into a proper AST.
@@ -194,8 +192,8 @@ parseExpr (Compound [Atom "and", x, y]) =
 parseExpr (Compound [Atom "or", x, y]) =
     Or (parseExpr x) (parseExpr y)
 
-parseExpr (Compound (Atom "list" : lstValue)) = 
-    List (map (\x -> (parseExpr x)) lstValue)
+parseExpr (Compound (Atom "list" : val)) = 
+    List (map (\x -> (parseExpr x)) val)
 
 -- List function: first
 parseExpr (Compound [Atom "first", Compound (Atom "list": first : rest)]) =
@@ -208,14 +206,14 @@ parseExpr (Compound [Atom "rest", Compound (Atom "list" : first : rest)]) =
 -- Compound [Atom "empty?",Compound [Atom "list",LiteralInt 1,LiteralInt 2,LiteralInt 3]]
 -- List function: empty
 -- Currently, only returning a List, not boolean values in evaluate
-parseExpr (Compound [Atom "empty?", Compound (Atom "list" : expressions)]) =
-    Empty (List (map (\x -> (parseExpr x)) expressions))
+parseExpr (Compound [Atom "empty?", Compound (Atom "list" : es)]) =
+    Empty (List (map (\x -> (parseExpr x)) es))
 
 parseExpr (Atom id) = Identifier id
 
 -- Just [Compound [Atom "define",Atom "a",LiteralInt 10]]
-parseExpr (Compound [Atom "define", identifier, expression]) =
-    Define ((parseExpr identifier), (parseExpr expression))
+parseExpr (Compound [Atom "define", id, e]) =
+    Define ((parseExpr id), (parseExpr e))
 
 -- Input: Compound [Atom "cond",
 --        Compound [LiteralBool True,Compound [Atom "+",LiteralInt 5,LiteralInt 1]],
@@ -284,12 +282,9 @@ evaluate (Or x y) =
     (evaluate (Or (evaluate x) (evaluate y)))
 
 -- |Evaluate list creation
-evaluate (List expressions) = 
-    List (map (\x -> evaluate x) expressions)
+evaluate (List es) = 
+    List (map (\x -> evaluate x) es)
 
 -- |Evaluate list empty.
 evaluate (Empty (List lst)) =
     Boolean (null lst)
-
--- |Evaluate the head of a list.
-
