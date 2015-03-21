@@ -99,11 +99,14 @@ pushIdentifier newId value symbolList = (newId, value) : symbolList
 
 fixListShow = filter . flip notElem
 
+spaceList [] = []
 spaceList str =
-    let
-        repl ',' = ' '
-        repl c = c
-    in map repl str
+    let s = head str
+        t = tail str
+    in
+        if s == ','
+        then ' ' : spaceList t
+        else s : spaceList t
 
 instance Show Expr where
     show (Number x) = show x
