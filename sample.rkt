@@ -24,3 +24,5 @@
 (list 3 2 4)
 (list 4 3 (+ 3 4))
 (list (< 3 2) #f (equal? 4 4))
+(empty? (list))
+(empty? (list 3 4 5))

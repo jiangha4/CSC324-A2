@@ -107,20 +107,47 @@ instance Show Expr where
     -- Note: the following definition is not necessary for this assignment,
     -- but you may find it helpful to define string representations of all
     -- expression forms.
-    show (If e1 e2 e3) = "(if " ++ show e1 ++ " " ++ show e2 ++ " " ++ show e3 ++ ")"
-    show (Add e1 e2) = "(+ " ++ show e1 ++ show e2 ++ ")"
-    show (Multiply e1 e2) = "(* " ++ show e1 ++ show e2 ++ ")"
-    show (Eq e1 e2) = "(equal? " ++ show e1 ++ show e2 ++ ")"
-    show (Lt e1 e2) = "(< " ++ show e1 ++ show e2 ++ ")"
-    show (Not e) = "(not " ++ show e ++ ")"
-    show (And e1 e2) = "(and " ++ show e1 ++ show e2 ++ ")"
-    show (Or e1 e2) = "(or " ++ show e1 ++ show e2 ++ ")"
-    show (List expression) = fixListShow "[]" ("'" ++ "(" ++ show expression ++ ")")
-    show (First expression) = show expression
-    show (Rest expressions) = "'" ++ "(" ++ show expressions ++ ")"
-    show (Empty expressions) = show expressions
-    show (Define (identifier, value)) = show identifier ++ "=" ++ show value  
-    show (SymbolTable [(identifier, value)]) = show identifier ++ show value
+    show (If e1 e2 e3) = 
+        "(if " ++ show e1 ++ " " ++ show e2 ++ " " ++ show e3 ++ ")"
+
+    show (Add e1 e2) = 
+        "(+ " ++ show e1 ++ show e2 ++ ")"
+
+    show (Multiply e1 e2) = 
+        "(* " ++ show e1 ++ show e2 ++ ")"
+
+    show (Eq e1 e2) = 
+        "(equal? " ++ show e1 ++ show e2 ++ ")"
+
+    show (Lt e1 e2) = 
+        "(< " ++ show e1 ++ show e2 ++ ")"
+
+    show (Not e) = 
+        "(not " ++ show e ++ ")"
+
+    show (And e1 e2) = 
+        "(and " ++ show e1 ++ show e2 ++ ")"
+
+    show (Or e1 e2) = 
+        "(or " ++ show e1 ++ show e2 ++ ")"
+
+    show (List expression) = 
+        fixListShow "[]" ("'" ++ "(" ++ show expression ++ ")")
+
+    show (First expression) = 
+        show expression
+
+    show (Rest expressions) = 
+        "'" ++ "(" ++ show expressions ++ ")"
+
+    show (Empty expressions) = 
+        show expressions
+
+    show (Define (identifier, value)) = 
+        show identifier ++ "=" ++ show value  
+
+    show (SymbolTable [(identifier, value)]) = 
+        show identifier ++ show value
 -- Doesn't work. Don't know why.
 --  show (List (expression : expressions)) = 
 --    "'" ++ "(" ++ show expression ++ (map show expressions) ++ ")"
@@ -128,9 +155,7 @@ instance Show Expr where
 -- |Take a base tree produced by the starter code,
 --  and transform it into a proper AST.
 parseExpr :: BaseExpr -> Expr
-
 parseExpr (LiteralInt n) = Number n
-
 parseExpr (LiteralBool b) = Boolean b
 
 parseExpr (Compound [Atom "if", b, x, y]) =
@@ -254,3 +279,7 @@ evaluate (Or (Boolean x) (Boolean y)) =
     Boolean (x || y)
 evaluate (Or x y) =
     (evaluate (Or (evaluate x) (evaluate y)))
+
+-- |Evaluate list empty.
+evaluate (Empty (List lst)) =
+    Boolean (null lst)
