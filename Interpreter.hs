@@ -146,7 +146,7 @@ instance Show Expr where
         "'" ++  fixListShow "[]'" ("(" ++ spaceList (show e) ++ ")")
 
     show (First e) = 
-        show expression
+        show e
 
     show (Rest e) = 
         "'" ++ fixListShow "[]'" ("(" ++ spaceList (show e)  ++ ")")
@@ -288,3 +288,6 @@ evaluate (List es) =
 -- |Evaluate list empty.
 evaluate (Empty (List lst)) =
     Boolean (null lst)
+
+evaluate (Define (SymbolTable (x, y))) =
+    (evaluate y)
