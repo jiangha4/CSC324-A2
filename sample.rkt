@@ -21,3 +21,6 @@
 (and #t #t)
 (or #t #f)
 (or (< (+ 1 0) 2) #f)
+(list 3 2 4)
+(list 4 3 (+ 3 4))
+(list (< 3 2) #f (equal? 4 4))

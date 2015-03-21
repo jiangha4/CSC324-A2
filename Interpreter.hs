@@ -97,6 +97,8 @@ symbolTable = SymbolTable [] -- Global symbol table
 pushIdentifier :: Expr -> Expr -> [(Expr, Expr)] -> [(Expr, Expr)]
 pushIdentifier newId value symbolList = (newId, value) : symbolList
 
+fixListShow = filter . flip notElem
+
 instance Show Expr where
     show (Number x) = show x
     show (Boolean True) = "#t"
@@ -113,7 +115,7 @@ instance Show Expr where
     show (Not e) = "(not " ++ show e ++ ")"
     show (And e1 e2) = "(and " ++ show e1 ++ show e2 ++ ")"
     show (Or e1 e2) = "(or " ++ show e1 ++ show e2 ++ ")"
-    show (List expression) = "'" ++ "(" ++ show expression ++ ")"
+    show (List expression) = fixListShow "[]" ("'" ++ "(" ++ show expression ++ ")")
     show (First expression) = show expression
     show (Rest expressions) = "'" ++ "(" ++ show expressions ++ ")"
     show (Empty expressions) = show expressions
