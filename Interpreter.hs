@@ -99,6 +99,12 @@ pushIdentifier newId value symbolList = (newId, value) : symbolList
 
 fixListShow = filter . flip notElem
 
+spaceList str =
+    let
+        repl ',' = ' '
+        repl c = c
+    in map repl str
+
 instance Show Expr where
     show (Number x) = show x
     show (Boolean True) = "#t"
@@ -132,13 +138,13 @@ instance Show Expr where
         "(or " ++ show e1 ++ show e2 ++ ")"
 
     show (List expression) = 
-        fixListShow "[]" ("'" ++ "(" ++ show expression ++ ")")
+        "'" ++  fixListShow "[]'" ("(" ++ spaceList (show expression) ++ ")")
 
     show (First expression) = 
         show expression
 
     show (Rest expressions) = 
-        "'" ++ "(" ++ show expressions ++ ")"
+        "'" ++ fixListShow "[]'" ("(" ++ spaceList (show expressions)  ++ ")")
 
     show (Empty expressions) = 
         show expressions
@@ -222,14 +228,6 @@ evaluate :: Expr -> Expr
 evaluate (Number n) = Number n
 evaluate (Boolean b) = Boolean b
 
--- | Evaluate Empty
-evaluate (Empty (List expressions)) = 
-    Empty (if ((length expressions) == 0) then Boolean True else Boolean False)
-
--- |Evaluate list creation
-evaluate (List expressions) = 
-    List (map (\x -> evaluate x) expressions)
-
 -- |Evaluate if-then-else.
 evaluate (If cond x y) =
     case (evaluate cond) of
@@ -280,6 +278,13 @@ evaluate (Or (Boolean x) (Boolean y)) =
 evaluate (Or x y) =
     (evaluate (Or (evaluate x) (evaluate y)))
 
+-- |Evaluate list creation
+evaluate (List expressions) = 
+    List (map (\x -> evaluate x) expressions)
+
 -- |Evaluate list empty.
 evaluate (Empty (List lst)) =
     Boolean (null lst)
+
+-- |Evaluate the head of a list.
+
