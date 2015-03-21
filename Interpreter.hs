@@ -97,8 +97,10 @@ symbolTable = SymbolTable [] -- Global symbol table
 pushIdentifier :: Expr -> Expr -> [(Expr, Expr)] -> [(Expr, Expr)]
 pushIdentifier newId value symbolList = (newId, value) : symbolList
 
+fixListShow :: [Char] -> [Char] -> [Char]
 fixListShow = filter . flip notElem
 
+spaceList :: [Char] -> [Char]
 spaceList [] = []
 spaceList str =
     let s = head str
