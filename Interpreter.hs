@@ -273,11 +273,18 @@ evaluate (Multiply x y) =
     evaluate (Multiply (evaluate x) (evaluate y))
 
 -- |Evaluate equality.
+
+-- |Evaluate list equality. Lists are a special case,
+--  since they are not atomic values.
 evaluate (Eq (List l1) (List l2)) =
-    let zippedList = zip l1 l2
+    let 
+        zippedList = zip l1 l2
         equalPairs = map (\(x, y) -> (evaluate (Eq x y)))
         allTrue = foldl (\x y -> (evaluate (And x y))) (Boolean True)
-    in  allTrue (equalPairs zippedList)
+    in  
+        if (length l1) /= (length l2)
+        then Boolean False
+        else allTrue (equalPairs zippedList)
 
 evaluate (Eq (Number x) (Number y)) =
     Boolean (x == y)
