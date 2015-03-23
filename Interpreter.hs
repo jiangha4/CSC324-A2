@@ -87,7 +87,7 @@ data Expr = Number Integer |
             List [Expr] |
             Empty Expr |
             First Expr |
-            Rest [Expr] |
+            Rest Expr |
             Define (Expr, Expr) |
             SymbolTable [(Expr, Expr)]
 
@@ -215,21 +215,21 @@ parseExpr (Compound [Atom "or", x, y]) =
 
 -- |Parse list construction.
 parseExpr (Compound (Atom "list" : val)) = 
-    List (map (\x -> (parseExpr x)) val)
+    List (map parseExpr val)
 
 -- |Parse 'first' for lists.
-parseExpr (Compound [Atom "first", Compound (Atom "list" : first : rest)]) =
-    First (parseExpr first)
+parseExpr (Compound [Atom "first", lst]) =
+    First (parseExpr lst)
 
 -- |Parse 'rest' for lists.
-parseExpr (Compound [Atom "rest", Compound (Atom "list" : first : rest)]) =
-    Rest (map (\x -> (parseExpr x)) rest)
+parseExpr (Compound [Atom "rest", lst]) =
+    Rest (parseExpr lst)
 
 -- Compound [Atom "empty?",Compound [Atom "list",LiteralInt 1,LiteralInt 2,LiteralInt 3]]
 -- List function: empty
 -- Currently, only returning a List, not boolean values in evaluate
-parseExpr (Compound [Atom "empty?", Compound (Atom "list" : es)]) =
-    Empty (List (map (\x -> (parseExpr x)) es))
+parseExpr (Compound [Atom "empty?", lst]) =
+    Empty (parseExpr lst)
 
 parseExpr (Atom id) = Identifier id
 
@@ -305,7 +305,7 @@ evaluate (Or x y) =
 
 -- |Evaluate list construction.
 evaluate (List lst) = 
-    List (map (\x -> evaluate x) lst)
+    List (map evaluate lst)
 
 -- |Evaluate 'empty?' for lists.
 evaluate (Empty (List lst)) =

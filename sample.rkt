@@ -27,4 +27,6 @@
 (list 2 (list 4) 3 5 2 (list 3 2 5 1))
 (empty? (list))
 (empty? (list 3 4 5))
-(define a 3)
+(first (list 1 2 3))
+(first (list (list 1 2) 3))
+(list (list 1 2 3) (list 4 5 6))
