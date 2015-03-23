@@ -331,3 +331,8 @@ evaluate (First (List lst)) =
 evaluate (First lst) =
     First (evaluate lst)
 
+-- |Evaluate 'rest' for lists.
+evaluate (Rest (List lst)) =
+    (List (tail lst))
+evaluate (Rest lst) =
+    Rest (evaluate lst)

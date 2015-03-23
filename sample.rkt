@@ -33,3 +33,5 @@
 (equal? (list 1 2) (list 3 4))
 (equal? (list 1 2 3 4) (list 1 2))
 (equal? (list (+ 1 1)) (list 2))
+(rest (list 1 2 3 4))
+(rest (list 1 2 3 (list 4 5)))
