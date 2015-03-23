@@ -218,7 +218,7 @@ parseExpr (Compound (Atom "list" : val)) =
     List (map (\x -> (parseExpr x)) val)
 
 -- |Parse 'first' for lists.
-parseExpr (Compound [Atom "first", Compound (Atom "list": first : rest)]) =
+parseExpr (Compound [Atom "first", Compound (Atom "list" : first : rest)]) =
     First (parseExpr first)
 
 -- |Parse 'rest' for lists.
@@ -303,10 +303,17 @@ evaluate (Or (Boolean x) (Boolean y)) =
 evaluate (Or x y) =
     (evaluate (Or (evaluate x) (evaluate y)))
 
--- |Evaluate list creation
-evaluate (List es) = 
-    List (map (\x -> evaluate x) es)
+-- |Evaluate list construction.
+evaluate (List lst) = 
+    List (map (\x -> evaluate x) lst)
 
--- |Evaluate list empty.
+-- |Evaluate 'empty?' for lists.
 evaluate (Empty (List lst)) =
     Boolean (null lst)
+
+-- |Evaluate 'first' for lists.
+evaluate (First (List lst)) =
+    head lst
+evaluate (First lst) =
+    First (evaluate lst)
+
