@@ -91,6 +91,7 @@ data Expr = Number Integer |
             Define (Expr, Expr) |
             SymbolTable [(Expr, Expr)]
 
+symbolTable :: Expr
 symbolTable = SymbolTable [] -- Global symbol table
 
 -- |Pushes a new identifier and its value into the symbolTable
@@ -225,15 +226,15 @@ parseExpr (Compound [Atom "first", lst]) =
 parseExpr (Compound [Atom "rest", lst]) =
     Rest (parseExpr lst)
 
--- Compound [Atom "empty?",Compound [Atom "list",LiteralInt 1,LiteralInt 2,LiteralInt 3]]
--- List function: empty
--- Currently, only returning a List, not boolean values in evaluate
+-- |Parse 'empty?' for lists.
 parseExpr (Compound [Atom "empty?", lst]) =
     Empty (parseExpr lst)
 
-parseExpr (Atom id) = Identifier id
+-- |Parse identifiers.
+parseExpr (Atom id) =
+    Identifier id
 
--- Just [Compound [Atom "define",Atom "a",LiteralInt 10]]
+-- |Parse 'define' name-bindings.
 parseExpr (Compound [Atom "define", id, e]) =
     Define ((parseExpr id), (parseExpr e))
 
@@ -263,45 +264,51 @@ evaluate (If cond x y) =
 evaluate (Add (Number x) (Number y)) =
     Number (x + y)
 evaluate (Add x y) =
-    (evaluate (Add (evaluate x) (evaluate y)))
+    evaluate (Add (evaluate x) (evaluate y))
 
 -- |Evaluate multiplication.
 evaluate (Multiply (Number x) (Number y)) =
     Number (x * y)
 evaluate (Multiply x y) =
-    (evaluate (Multiply (evaluate x) (evaluate y)))
+    evaluate (Multiply (evaluate x) (evaluate y))
 
 -- |Evaluate equality.
+evaluate (Eq (List l1) (List l2)) =
+    let zippedList = zip l1 l2
+        equalPairs = map (\(x, y) -> (evaluate (Eq x y)))
+        allTrue = foldl (\x y -> (evaluate (And x y))) (Boolean True)
+    in  allTrue (equalPairs zippedList)
+
 evaluate (Eq (Number x) (Number y)) =
     Boolean (x == y)
 evaluate (Eq (Boolean x) (Boolean y)) =
     Boolean (x == y)
 evaluate (Eq x y) =
-    (evaluate (Eq (evaluate x) (evaluate y)))
+    evaluate (Eq (evaluate x) (evaluate y))
 
 -- |Evaluate less-than comparison.
 evaluate (Lt (Number x) (Number y)) =
     Boolean (x < y)
 evaluate (Lt x y) =
-    (evaluate (Lt (evaluate x) (evaluate y)))
+    evaluate (Lt (evaluate x) (evaluate y))
 
 -- |Evaluate logical negation.
 evaluate (Not (Boolean x)) =
     Boolean (not x)
 evaluate (Not x) =
-    (evaluate (Not (evaluate x)))
+    evaluate (Not (evaluate x))
 
 -- |Evaluate logical and.
 evaluate (And (Boolean x) (Boolean y)) =
     Boolean (x && y)
 evaluate (And x y) =
-    (evaluate (And (evaluate x) (evaluate y)))
+    evaluate (And (evaluate x) (evaluate y))
 
 -- |Evaluate logical or.
 evaluate (Or (Boolean x) (Boolean y)) =
     Boolean (x || y)
 evaluate (Or x y) =
-    (evaluate (Or (evaluate x) (evaluate y)))
+    evaluate (Or (evaluate x) (evaluate y))
 
 -- |Evaluate list construction.
 evaluate (List lst) = 

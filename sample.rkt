@@ -29,4 +29,6 @@
 (empty? (list 3 4 5))
 (first (list 1 2 3))
 (first (list (list 1 2) 3))
-(list (list 1 2 3) (list 4 5 6))
+(equal? (list 1 2 3) (list 1 2 3))
+(equal? (list 1 2) (list 3 4))
+(equal? (list 1 2 3 4) (list 1 2))
