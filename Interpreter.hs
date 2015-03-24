@@ -13,11 +13,8 @@ g3jiangh :: Haohan Jiang
 -}
 
 {- TODO : 
-    - Equals not working for lists
-    - Show for lists is fucked
     - No errors for List functions
     - Cond
-    - Empty returning List instead of True or False
     - Defining functions
     - Bindings and closures
     - Definitations
@@ -71,9 +68,6 @@ interpretPaddle (Just exprs) =
 -- An expression data type
 data Expr = Number Integer |
             Boolean Bool |
-            Identifier [Char]|
-            -- Only two literal types in Integers and Booleans
-            -- Parsed by BaseParser.hs
             If Expr Expr Expr |
             Add Expr Expr |
             Multiply Expr Expr |
@@ -82,21 +76,16 @@ data Expr = Number Integer |
             Not Expr |
             And Expr Expr |
             Or Expr Expr |
-            Cond [(Expr, Expr)] Expr | -- List of Exprs 
-            Else Expr |
+            Cond [(Expr, Expr)] |
+            Else (Expr, Expr) |
             List [Expr] |
             Empty Expr |
             First Expr |
-            Rest Expr |
-            Define (Expr, Expr) |
-            SymbolTable [(Expr, Expr)]
+            Rest Expr
 
-symbolTable :: Expr
-symbolTable = SymbolTable [] -- Global symbol table
+data Identifier = ID [Char]
 
--- |Pushes a new identifier and its value into the symbolTable
-pushIdentifier :: Expr -> Expr -> [(Expr, Expr)] -> [(Expr, Expr)]
-pushIdentifier newId value symbolList = (newId, value) : symbolList
+data SymbolTable = Bindings [(Identifier, Expr)]
 
 -- |Removes square brackets and inner-apostrophes
 --  from the string representation of the list.
@@ -107,7 +96,8 @@ fixListShow = filter . flip notElem
 spaceList :: [Char] -> [Char]
 spaceList [] = []
 spaceList str =
-    let s = head str
+    let 
+        s = head str
         t = tail str
     in
         if s == ','
@@ -118,63 +108,8 @@ instance Show Expr where
     show (Number x) = show x
     show (Boolean True) = "#t"
     show (Boolean False) = "#f"
-    show (Identifier id) = show id
-    -- |String representation for 'if'.
-    show (If e1 e2 e3) = 
-        "(if " ++ show e1 ++ " " ++ show e2 ++ " " ++ show e3 ++ ")"
-
-    -- |String representation for "+'.
-    show (Add e1 e2) = 
-        "(+ " ++ show e1 ++ show e2 ++ ")"
-
-    -- |String representation for '*'.
-    show (Multiply e1 e2) = 
-        "(* " ++ show e1 ++ show e2 ++ ")"
-
-    -- |String representation for 'equal?'.
-    show (Eq e1 e2) = 
-        "(equal? " ++ show e1 ++ show e2 ++ ")"
-
-    -- |String representation for '<'.
-    show (Lt e1 e2) = 
-        "(< " ++ show e1 ++ show e2 ++ ")"
-
-    -- |String representation for 'not'.
-    show (Not e) = 
-        "(not " ++ show e ++ ")"
-
-    -- |String representation for 'and'.
-    show (And e1 e2) = 
-        "(and " ++ show e1 ++ show e2 ++ ")"
-
-    -- |String representation for 'or'.
-    show (Or e1 e2) = 
-        "(or " ++ show e1 ++ show e2 ++ ")"
-
-    -- |String representation for lists.
     show (List e) = 
         "'" ++  fixListShow "[]'" ("(" ++ spaceList (show e) ++ ")")
-
-    -- |String representation for 'first'.
-    show (First e) = 
-        show e
-
-    -- |String representation for 'rest'.
-    show (Rest e) = 
-        "'" ++ fixListShow "[]'" ("(" ++ spaceList (show e)  ++ ")")
-
-    -- |String representation for 'empty?'.
-    show (Empty e) = 
-        show e
-
-    -- |String representation for 'define'.
-    show (Define (id, val)) = 
-        show id ++ "=" ++ show val
-
-    -- |String representation for symbol tables.
-    show (SymbolTable [(id, val)]) = 
-        show id ++ show val
--- Doesn't work. Don't know why.
 
 -- |Take a base tree produced by the starter code,
 --  and transform it into a proper AST.
@@ -230,29 +165,22 @@ parseExpr (Compound [Atom "rest", lst]) =
 parseExpr (Compound [Atom "empty?", lst]) =
     Empty (parseExpr lst)
 
--- |Parse identifiers.
-parseExpr (Atom id) =
-    Identifier id
+-- |Parse 'cond'.
+parseExpr (Compound (Atom "cond" : val)) =
+    let
+        condEntry (Compound [Atom "else", x]) = (Boolean True, parseExpr x)
+        condEntry (Compound [x, y]) = (parseExpr x, parseExpr y)
+        parseCond = map condEntry
+    in
+        Cond (parseCond val)
 
--- |Parse 'define' name-bindings.
-parseExpr (Compound [Atom "define", id, e]) =
-    Define ((parseExpr id), (parseExpr e))
-
--- Input: Compound [Atom "cond",
---        Compound [LiteralBool True,Compound [Atom "+",LiteralInt 5,LiteralInt 1]],
---        Atom "else",Compound [Compound [Atom "+",LiteralInt 6,LiteralInt 1]]]
--- Input: Compound [Atom "cond",
-    -- Compound [LiteralBool True,Compound [Atom "+",LiteralInt 2,LiteralInt 1]],
-    -- Compound [LiteralBool False,Compound [Atom "+",LiteralInt 3,LiteralInt 1]],
-    -- Atom "else",Compound [Compound [Atom "+",LiteralInt 3,LiteralInt 1]]]
--- parseExpr (Compound (Atom "cond" : ), Atom "else", finalExpr) =
---    Cond (map (\x -> (parseExpr x)) expressions) Else (parseExpr finalExpr)
 
 -- |Evaluate an AST by simplifying it into
 --  a number, boolean, list, or function value.
 evaluate :: Expr -> Expr
 evaluate (Number n) = Number n
 evaluate (Boolean b) = Boolean b
+evaluate (List l) = List (map evaluate l)
 
 -- |Evaluate if-then-else.
 evaluate (If cond x y) =
@@ -317,10 +245,6 @@ evaluate (Or (Boolean x) (Boolean y)) =
 evaluate (Or x y) =
     evaluate (Or (evaluate x) (evaluate y))
 
--- |Evaluate list construction.
-evaluate (List lst) = 
-    List (map evaluate lst)
-
 -- |Evaluate 'empty?' for lists.
 evaluate (Empty (List lst)) =
     Boolean (null lst)
@@ -333,6 +257,18 @@ evaluate (First lst) =
 
 -- |Evaluate 'rest' for lists.
 evaluate (Rest (List lst)) =
-    (List (tail lst))
+    List (tail lst)
 evaluate (Rest lst) =
     Rest (evaluate lst)
+
+-- |Evaluate 'cond'.
+evaluate (Cond ((Boolean True, e) : _)) =
+    evaluate e
+evaluate (Cond ((Boolean False, _) : lst)) =
+    (evaluate (Cond lst))
+evaluate (Cond lst) =
+    let
+        evalCond = map (\(x, y) -> (evaluate x, evaluate y))
+    in
+        evaluate (Cond (evalCond lst))
+
